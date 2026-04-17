@@ -59,13 +59,18 @@
 
 ## Результати
 
-| Модель | Threshold | Train F1 | Val F1 | Train ROC-AUC | Val ROC-AUC | Precision | Recall |
+| Модель | Dataset | Threshold | Accuracy | Precision | Recall | F1 | ROC-AUC |
 |---|---|---|---|---|---|---|---|
-| Logistic Regression | 0.65 | — | 0.500 | — | 0.790 | — | — |
-| kNN | 0.21 | — | 0.506 | — | 0.789 | — | — |
-| Decision Tree | 0.48 | — | 0.525 | — | — | — | 0.606 |
-| **XGBoost (RandomizedSearch)** | — | — | **0.530** | — | **0.813** | — | — |
-| XGBoost (Hyperopt) | — | — | 0.530 | — | — | — | — |
+| Logistic Regression | train | 0.65 | 0.8644 | 0.4238 | 0.5664 | 0.4848 | 0.7945 |
+| Logistic Regression | validation | 0.65 | 0.8701 | 0.4428 | 0.5927 | 0.5069 | 0.7996 |
+| kNN | train | 0.21 | 0.8707 | 0.4406 | 0.5462 | 0.4877 | 0.8242 |
+| kNN | validation | 0.21 | 0.8765 | 0.4606 | 0.5603 | 0.5056 | 0.7889 |
+| Decision Tree | train | 0.48 | 0.8703 | 0.4418 | 0.5750 | 0.4997 | 0.7905 |
+| Decision Tree | validation | 0.48 | 0.8763 | 0.4626 | 0.6056 | 0.5245 | 0.8008 |
+| XGBoost (RandomizedSearch) | train | 0.58 | 0.8743 | 0.4545 | 0.5794 | 0.5094 | 0.8161 |
+| XGBoost (RandomizedSearch) | validation | 0.58 | 0.8804 | 0.4757 | 0.6002 | 0.5307 | 0.8133 |
+| XGBoost (Hyperopt) | train | 0.69 | 0.8858 | 0.4942 | 0.5740 | 0.5311 | 0.8617 |
+| XGBoost (Hyperopt) | validation | 0.69 | 0.8854 | 0.4926 | 0.5744 | 0.5303 | 0.8118 |
 
 > **Фінальна модель**: XGBoost (RandomizedSearch) — найкращий баланс F1 і ROC-AUC, трохи вищий recall порівняно з Hyperopt.
 
