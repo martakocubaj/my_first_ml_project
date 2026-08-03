@@ -1,128 +1,128 @@
 # Bank Marketing Dataset — Machine Learning Project
 
-## Задача
+## Task
 
-Датасет «Bank Marketing» стосується прямих маркетингових кампаній (телефонних дзвінків) банківської установи. Мета — побудувати модель бінарної класифікації, яка передбачає, чи підпише клієнт строковий депозит (змінна `y`). Датасет взято з [Kaggle](https://www.kaggle.com/datasets/sahistapatel96/bankadditionalfullcsv) і містить 41 176 записів та 21 змінну.
+The **Bank Marketing** dataset contains information from direct marketing campaigns (telephone calls) conducted by a banking institution. The goal is to build a **binary classification** model that predicts whether a client will subscribe to a term deposit (target variable `y`). The dataset was obtained from **Kaggle** and contains **41,176 records** and **21 variables**.
 
-Оригінальний датасет сильно незбалансований: ~89% клієнтів депозит **не** підписали, і лише ~11% — підписали.
+The original dataset is highly imbalanced: approximately **89%** of clients **did not** subscribe to a term deposit, while only **11%** did.
 
 ---
 
-## Підхід
+## Approach
 
-### Метрика оцінки
+### Evaluation Metric
 
-Через незбалансованість класів `accuracy` є малоінформативною. Як головну метрику обрано **F1-score**, що враховує баланс між `precision` і `recall`. Додатково відстежувались `ROC-AUC`, `precision` і `recall`.
+Due to the class imbalance, **accuracy** is not a very informative metric. Therefore, **F1-score** was chosen as the primary evaluation metric, as it balances **precision** and **recall**. In addition, **ROC-AUC**, **precision**, and **recall** were also evaluated.
 
 ### Exploratory Data Analysis
 
-Під час EDA були висунуті та перевірені гіпотези щодо впливу окремих ознак:
+During the EDA, several hypotheses about the influence of individual features were formulated and tested:
 
-- **Вік**: клієнти молодше 25 і старше 60 частіше підписували депозит.
-- **Робота**: студенти та `entrepreneur` конвертуються краще; `blue-collar` — гірше.
-- **Сімейний стан**: самотні клієнти підписують депозит частіше за одружених.
-- **Освіта**: наявність університетського ступеня позитивно корелює з підписанням.
-- **Місяць**: квітень, жовтень, вересень, березень і грудень — найкраща конверсія; травень — найгірша.
-- **Тип контакту**: клієнти, яких контактували через `cellular`, конвертуються краще.
-- **Попередній контакт**: наявність контакту до поточної кампанії суттєво підвищує шанс підписання.
+* **Age:** Clients younger than 25 and older than 60 were more likely to subscribe to a term deposit.
+* **Occupation:** Students and `entrepreneur` clients had higher conversion rates, while `blue-collar` clients had lower conversion rates.
+* **Marital status:** Single clients subscribed to a term deposit more often than married clients.
+* **Education:** Having a university degree was positively associated with subscribing to a term deposit.
+* **Month:** April, October, September, March, and December had the highest conversion rates, while May had the lowest.
+* **Contact type:** Clients contacted via `cellular` converted more often.
+* **Previous contact:** Having been contacted before the current campaign significantly increased the probability of subscribing to a term deposit.
 
-### Препроцесинг і Feature Engineering
+### Preprocessing and Feature Engineering
 
-| Дія | Деталі |
-|---|---|
-| Видалено `duration` | Недоступна до здійснення дзвінка, не використовується в реальному сценарії |
-| Видалено `default` | Майже всі значення — `no` або `unknown`, дуже мала корисність |
-| `campaign` → log-трансформація + clip | Логарифм для нормалізації розподілу; кліп при 2.5, де конверсія падає до 0 |
-| `pdays` → бінарна `pdays_was_contacted` | Значення 999 = «не контактувався»; замінено на 0/1 |
-| Створено `had_previous_contact` | Бінарна ознака: чи були контакти до поточної кампанії |
-| Категоріальні → One-Hot Encoding | Усі категоріальні змінні|
-| Числові → StandardScaler | Для моделей, чутливих до масштабу (Logistic Regression, kNN) |
-| `scale_pos_weight` для XGBoost | ~7.88, враховує незбалансованість класів |
+| Action                                     | Details                                                                                                               |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| Removed `duration`                         | Not available before the phone call, so it cannot be used in a real-world prediction scenario                         |
+| Removed `default`                          | Almost all values are `no` or `unknown`, providing very little useful information                                     |
+| `campaign` → log transformation + clipping | Log transformation to improve the distribution; values were clipped at 2.5, where the conversion rate dropped to zero |
+| `pdays` → binary `pdays_was_contacted`     | The value 999 means "not contacted previously"; replaced with a binary 0/1 feature                                    |
+| Created `had_previous_contact`             | Binary feature indicating whether the client had been contacted before the current campaign                           |
+| Categorical variables → One-Hot Encoding   | Applied to all categorical variables                                                                                  |
+| Numerical variables → StandardScaler       | Used for models sensitive to feature scaling (Logistic Regression and kNN)                                            |
+| `scale_pos_weight` for XGBoost             | Approximately 7.88, accounting for the class imbalance                                                                |
 
-Помічена кореляція між макроекономічними змінними (`emp.var.rate`, `euribor3m`, `nr.employed`). Для логістичної регресії порівнювались варіанти з і без корельованих ознак + з регуляризацією.
-
----
-
-## Моделі
-
-Побудовано **5 моделей** із двома варіантами тюнінгу бустингу:
-
-1. **Logistic Regression** — базова лінійна модель із регуляризацією з `RandomizedSearchCV`
-2. **kNN** — з PCA для зниження розмірності з `RandomizedSearchCV`
-3. **Decision Tree** — з `RandomizedSearchCV` для підбору гіперпараметрів
-4. **XGBoost (RandomizedSearch)** — Sklearn `RandomizedSearchCV`
-5. **XGBoost (Hyperopt)** — Bayesian Optimization через бібліотеку `hyperopt`
-
-Для всіх моделей застосовувався підбір оптимального **threshold** (замість стандартного 0.5) через перебір від 0.1 до 0.9 з кроком 0.01 на валідаційній вибірці.
+A noticeable correlation was observed among the macroeconomic variables (`emp.var.rate`, `euribor3m`, and `nr.employed`). For Logistic Regression, models with and without the correlated variables were compared, both with regularization.
 
 ---
 
-## Результати
+## Models
 
-| Модель | Dataset | Threshold | Accuracy | Precision | Recall | F1 | ROC-AUC |
-|---|---|---|---|---|---|---|---|
-| Logistic Regression | train | 0.65 | 0.8644 | 0.4238 | 0.5664 | 0.4848 | 0.7945 |
-| Logistic Regression | validation | 0.65 | 0.8701 | 0.4428 | 0.5927 | 0.5069 | 0.7996 |
-| kNN | train | 0.21 | 0.8707 | 0.4406 | 0.5462 | 0.4877 | 0.8242 |
-| kNN | validation | 0.21 | 0.8765 | 0.4606 | 0.5603 | 0.5056 | 0.7889 |
-| Decision Tree | train | 0.48 | 0.8703 | 0.4418 | 0.5750 | 0.4997 | 0.7905 |
-| Decision Tree | validation | 0.48 | 0.8763 | 0.4626 | 0.6056 | 0.5245 | 0.8008 |
-| XGBoost (RandomizedSearch) | train | 0.58 | 0.8743 | 0.4545 | 0.5794 | 0.5094 | 0.8161 |
-| XGBoost (RandomizedSearch) | validation | 0.58 | 0.8804 | 0.4757 | 0.6002 | 0.5307 | 0.8133 |
-| XGBoost (Hyperopt) | train | 0.69 | 0.8858 | 0.4942 | 0.5740 | 0.5311 | 0.8617 |
-| XGBoost (Hyperopt) | validation | 0.69 | 0.8854 | 0.4926 | 0.5744 | 0.5303 | 0.8118 |
+A total of **five models** were trained, including two hyperparameter tuning approaches for XGBoost:
 
-> **Фінальна модель**: XGBoost (RandomizedSearch) — найкращий баланс F1 і ROC-AUC, трохи вищий recall порівняно з Hyperopt.
+1. **Logistic Regression** – a baseline linear model with regularization, tuned using `RandomizedSearchCV`.
+2. **k-Nearest Neighbors (kNN)** – combined with PCA for dimensionality reduction and tuned using `RandomizedSearchCV`.
+3. **Decision Tree** – tuned using `RandomizedSearchCV`.
+4. **XGBoost (RandomizedSearch)** – tuned using Scikit-learn's `RandomizedSearchCV`.
+5. **XGBoost (Hyperopt)** – tuned using Bayesian optimization with the `hyperopt` library.
+
+For all models, the optimal **decision threshold** (instead of the default value of 0.5) was selected by searching thresholds from **0.10 to 0.90** with a step size of **0.01** on the validation set.
 
 ---
 
-## Важливість ознак (XGBoost)
+## Results
 
-| Ознака | Важливість | Коментар |
-|---|---|---|
-| `nr.employed` | 0.451 | Домінуюча ознака. Чим менше зайнятих — тим вища ймовірність депозиту (нестабільна економіка) |
-| `emp.var.rate` | 0.091 | Темп зміни зайнятості: низькі значення → вищий шанс депозиту |
-| `month_may` | 0.079 | Травень = найнижча конверсія, підтверджується EDA |
-| `euribor3m` | 0.076 | Ставка: низька → більше депозитів |
-| `month_oct` | ~0.04 | Жовтень = висока конверсія |
-| `pdays_was_contacted` | ~0.03 | Попередній контакт підвищує шанс підписання |
-| `poutcome_success` | ~0.03 | Успіх попередньої кампанії позитивно впливає |
+| Model                      | Dataset    | Threshold | Accuracy | Precision | Recall | F1     | ROC-AUC |
+| -------------------------- | ---------- | --------- | -------- | --------- | ------ | ------ | ------- |
+| Logistic Regression        | train      | 0.65      | 0.8644   | 0.4238    | 0.5664 | 0.4848 | 0.7945  |
+| Logistic Regression        | validation | 0.65      | 0.8701   | 0.4428    | 0.5927 | 0.5069 | 0.7996  |
+| kNN                        | train      | 0.21      | 0.8707   | 0.4406    | 0.5462 | 0.4877 | 0.8242  |
+| kNN                        | validation | 0.21      | 0.8765   | 0.4606    | 0.5603 | 0.5056 | 0.7889  |
+| Decision Tree              | train      | 0.48      | 0.8703   | 0.4418    | 0.5750 | 0.4997 | 0.7905  |
+| Decision Tree              | validation | 0.48      | 0.8763   | 0.4626    | 0.6056 | 0.5245 | 0.8008  |
+| XGBoost (RandomizedSearch) | train      | 0.58      | 0.8743   | 0.4545    | 0.5794 | 0.5094 | 0.8161  |
+| XGBoost (RandomizedSearch) | validation | 0.58      | 0.8804   | 0.4757    | 0.6002 | 0.5307 | 0.8133  |
+| XGBoost (Hyperopt)         | train      | 0.69      | 0.8858   | 0.4942    | 0.5740 | 0.5311 | 0.8617  |
+| XGBoost (Hyperopt)         | validation | 0.69      | 0.8854   | 0.4926    | 0.5744 | 0.5303 | 0.8118  |
 
-З точки зору common sense пріоритет ознак виглядає адекватним.
-
----
-
-## SHAP-аналіз
-
-SHAP-аналіз для топ-10 ознак підтвердив висновки з feature importance:
-
-- **`nr.employed`** — негативна кореляція з цільовою: вища зайнятість → менше депозитів.
-- **`emp.var.rate`** і **`euribor3m`** — схожий патерн: низькі значення підвищують ймовірність.
-- **`cons.conf.idx`** — низька довіра споживачів до економіки парадоксально підвищує шанс депозиту.
-- **`pdays_was_contacted`** — контакт був → вправо (позитивний SHAP).
-- **`campaign`** — більше дзвінків у поточній кампанії → нижча ймовірність .
+> **Final model:** **XGBoost (RandomizedSearch)** — achieved the best balance between F1-score and ROC-AUC, with a slightly higher recall than the Hyperopt-tuned model.
 
 ---
 
-## Аналіз помилок
+## Feature Importance (XGBoost)
 
-**False Negatives** (модель пропускає реальних клієнтів):
-- Клієнти з відносно стабільними макроекономічними показниками — модель недооцінює їх.
-- Найбільша частка FN у квітні та вересні (місяці з високою конверсією).
-- Малочисельні групи: `unemployed`, `student`, `retired` — модель їх погано вивчила.
-- Медіана `proba` у FN = **0.43** (далеко від threshold 0.69).
+| Feature               | Importance | Comment                                                                                                                  |
+| --------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `nr.employed`         | 0.451      | The dominant feature. Fewer employed people → higher probability of subscribing to a term deposit (less stable economy). |
+| `emp.var.rate`        | 0.091      | Employment variation rate: lower values → higher probability of subscription.                                            |
+| `month_may`           | 0.079      | May had the lowest conversion rate, consistent with the EDA.                                                             |
+| `euribor3m`           | 0.076      | Lower interest rates → more term deposit subscriptions.                                                                  |
+| `month_oct`           | ~0.04      | October had a high conversion rate.                                                                                      |
+| `pdays_was_contacted` | ~0.03      | Previous contact increases the probability of subscription.                                                              |
+| `poutcome_success`    | ~0.03      | A successful previous campaign has a positive effect.                                                                    |
 
-**False Positives** (модель переоцінює клієнтів):
-- Клієнти з `poutcome_success` — 23.7% FP. Модель надто довіряє цій ознаці.
-- Місяці з малою кількістю контактів: грудень, жовтень, березень.
-- Медіана `proba` у FP = **0.72** — модель впевнена у хибних передбаченнях.
+From a common-sense perspective, the ranking of feature importance appears reasonable.
+
+---
+
+## SHAP Analysis
+
+The SHAP analysis of the top 10 features confirmed the conclusions drawn from the feature importance analysis:
+
+* **`nr.employed`** shows a negative relationship with the target: higher employment levels are associated with a lower probability of subscribing to a term deposit.
+* **`emp.var.rate`** and **`euribor3m`** exhibit a similar pattern: lower values increase the probability of subscription.
+* **`cons.conf.idx`** is particularly interesting: lower consumer confidence in the economy paradoxically increases the probability of subscribing to a term deposit.
+* **`pdays_was_contacted`** shows a clear positive effect: clients who had been contacted previously tend to have positive SHAP values.
+* **`campaign`** shows the opposite pattern: the more times a client is contacted during the current campaign, the lower the predicted probability of subscribing.
 
 ---
 
-## Ідеї для покращення
+## Error Analysis
 
-1. **Знизити threshold** з 0.69 до ~0.45–0.50, щоб захопити більше потенційних клієнтів.
-2. **Додати interaction feature** між `nr.employed` і `pdays_was_contacted` — для кращого розпізнавання клієнтів у стабільній економіці.
-3. **Oversampling малих груп**: `retired`, `student`, `unemployed`, місяці з малою вибіркою (грудень, жовтень, березень).
+### False Negatives (the model misses actual subscribers)
+
+* Clients observed under relatively stable macroeconomic conditions are often underestimated by the model.
+* The largest proportion of False Negatives occurs in **April** and **September**, despite these months having high conversion rates in the EDA.
+* Underrepresented groups such as **`unemployed`**, **`student`**, and **`retired`** are more likely to be misclassified because the model has fewer examples from which to learn.
+* The median predicted probability for False Negatives is **0.43**, well below the selected threshold of **0.69**.
+
+### False Positives (the model overestimates non-subscribers)
+
+* Clients with **`poutcome_success`** account for **23.7%** of False Positives, indicating that the model relies too heavily on this feature.
+* The largest proportion of False Positives occurs in **December**, **October**, and **March**, months with relatively few observations.
+* The median predicted probability for False Positives is **0.72**, indicating that the model is often quite confident in its incorrect predictions.
 
 ---
+
+## Ideas for Improvement
+
+1. **Lower the decision threshold** from **0.69** to approximately **0.45–0.50** to identify more potential subscribers.
+2. **Add an interaction feature** between **`nr.employed`** and **`pdays_was_contacted`** so that the model can better distinguish clients under different macroeconomic conditions.
+3. **Apply oversampling** to underrepresented groups (`retired`, `student`, `unemployed`) and months with few observations (December, October, and March) to improve model stability.
