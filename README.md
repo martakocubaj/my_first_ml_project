@@ -2,7 +2,7 @@
 
 ## Task
 
-The **Bank Marketing** dataset contains information from direct marketing campaigns (telephone calls) conducted by a banking institution. The goal is to build a **binary classification** model that predicts whether a client will subscribe to a term deposit (target variable `y`). The dataset was obtained from **Kaggle** and contains **41,176 records** and **21 variables**.
+The **Bank Marketing** dataset contains information from direct marketing campaigns (telephone calls) conducted by a banking institution. The goal is to build a **binary classification** model that predicts whether a client will subscribe to a term deposit (target variable `y`). The dataset was obtained from [Kaggle](https://www.kaggle.com/datasets/sahistapatel96/bankadditionalfullcsv) and contains **41,176 records** and **21 variables**.
 
 The original dataset is highly imbalanced: approximately **89%** of clients **did not** subscribe to a term deposit, while only **11%** did.
 
